@@ -1,0 +1,56 @@
+Reminder about security vulnerability for Docker
+beginners.
+
+You probably know that on Unix machine this command 'cat /etc/passwd'
+leads to famous 'Permission denied' error. You can open it without
+error via Docker:
+docker run --rm debian cat /etc/passwd
+
+You have access to root files because containers are just processes,
+usually owned by root. By the way it's the reason of process-like API
+to list containers (docker ps). Let's find pid and owner of container
+on host machine. First, start container:
+docker run --rm -it --name test debian bash
+
+In another terminal we can inspect container and get pid:
+cid=$(docker inspect -f '{{.State.Pid}}' test)
+
+Check details of this process:
+ps -a -p $(cid)
+
+As you can see owner is root. Notice pts of this process. All
+processes ran in same container have same pseudo-terminal slave
+device. We can start any number of processes in container. Let's
+launch this useless daemon:
+bash &
+
+Then on host machine we can run:
+ps aux|grep <here-enter-pts>
+And you can see new root process of test container.
+
+I advise to create user in container with same id as in your host
+PC. And launch your applications under this user rights. And follow
+advise from docker devs to have on server minimum of root services
+(with docker daemon in the list). Any other apps you can run as
+container, preferably under regular user account.
+
+If you don't know how to manage user accounts, here is quick
+instruction:
+On host:
+1.'id' command prints uid and gid. Remember UID,
+UNAME, GID, GNAME.  
+In container:
+2.'groupadd -g GID GNAME' creates
+group with same gid and group name as on host. 
+3.'useradd -g GNAME -u UID UNAME' creates user and adds it to group. 
+4.'su - UNAME <your command>'
+
+Now if you check process on host you'll see it's running under your
+user account. So it has restricted rights and it's more secure. The
+downside is dependency on host's ids.
+
+If you run several web sites on one server than it's better to create
+user for each application. Because in case your one site is hacked
+then all other application files are protected from malicious code
+(it's valid if files are under standard 644 permissions and folders -
+655).

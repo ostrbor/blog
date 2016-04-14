@@ -1,0 +1,81 @@
+How to create private git repository.
+
+Requirements: 
+- unix-like os;
+- git;
+- Dropbox account.
+
+As git repo should be located on server to be available to everybody
+from everywhere, we should find server to store our git data. I think
+it's reasonable to begin with Dropbox basic plan of 2GB free space. We
+can't use git API to pull/push from Dropbox account, so first lets
+create git repo on our local machine. Such repo will be automatically
+synchronized with Dropbox backup.
+
+1 ACT. Installation of Dropbox daemon.
+- download application (link);
+- run dropboxd.
+It might ask you to visit some page to link your device with Dropbox
+account. In that case don't terminate running script, visit given page and
+follow instructions. After that dropboxd will be properly set, it
+welcomes you and creates Dropbox folder in home directory. Now you can
+Ctr-C and run it in background (./dropboxd &).
+
+2 ACT. Creation of pseudo remote git repo.  
+
+Create ~/Git folder on your local PC. Inside it run 'git init --bare
+your-repo-name.git'. Then create local repo in another folder with
+'git init'. Bind local and remote with 'git remote add origin
+~/Git/your-repo-name.git'. Make changes in local, commit and push it. Remember
+about first push, it must specify upstream machine 'push
+--set-upstream origin master'.
+
+Commentaries:
+
+1)git init - command to create repo; 
+
+2)there are 2 kinds of repo: with workspace and without (bare). The
+last one is created on remote computer. It's whole purpose is to be
+pushed/pulled, nobody works in it. And it only consists of
+version control objects;
+
+3)by convention name of bare repo is ended with '.git';
+
+4)'git remote' is to manage repo on remote machines;
+
+5)'origin' is by convention the short alias of remote PC;
+
+6)'upstream' is the repo, located up in data stream,
+from which you download. Before referencing origin in push command you
+must specify origin as upstream. 
+
+3 ACT. True remote repo with dropbox backup.  
+
+In the end of second act we can push/pull to local folder, which is
+automatically backuped. But if we gonna work on another host then we
+must repeat tedious work of installing dropbox daemon, copying git
+folder from Dropbox, initializing repo. It's much better to repeat 2
+ACT not on local machine, but on your server. Then on any host you
+only need to 'git init && git remote add origin
+<your-hostname>@<ipaddress-of-your-server>:/path/to/repository'. For
+example 'git init && git remote add origin
+john33@155.22.33.0:/home/john/Dropbox/Git/web-project.git'.
+
+If you decided to use Dropbox account as storage for your backups than
+I'd like to warn you about some drawbacks. Files and folders sent to
+dropbox servers loose their permissions and owners. After download
+they might have different permissions and owner is owner of dropboxd
+daemon on local host.
+
+To solve it you should use unix tar utility. Created tarball remembers
+all necessary information. But there's one caveat - to extract meta
+info about files/folders you must tar as superuser. Easy to create
+tarball: 
+
+tar cf some-file.tar test.txt
+
+But to extract with owner information you must run tar as root
+(e.g. with sudo), because command chown can be used only by superuser:
+
+sudo tar xf some-file.tar
+

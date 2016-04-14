@@ -1,0 +1,70 @@
+Why changes in volume after VOLUME instruction in Dockerfile are
+discarded?
+
+It's really easy to understand it by following the procedure of image
+building step by step. Let's consider this example of Dockerfile:
+
+FROM debian
+RUN mkdir /test
+VOLUME /test
+RUN touch /test/file
+
+Now I try to explain each instruction with CLI commands. In general we
+have three steps: folder creation, volume creation and changing of the
+volume's content. And each step consists of three docker commands.
+
+1.
+temp_container_1 = docker run debian mkdir/test
+layer_1 = docker commit $(temp_container_1)
+docker rm -v $(temp_container_1)
+
+Comments: first we created intermediate container and new folder in
+it. Then to save changes in image we had to commit. After that we
+deleted useless temporary container.
+
+2.
+temp_container_2 = docker run -v /test $(layer_1) 
+layer_2 = docker commit $(temp_container_2)
+docker rm -v $(temp_container_2)
+
+Comments: folder /test in new container was marked as volume. It means
+it becomes a symbolic link for any container, leading to host's
+folder. In result image there is real folder /test, but it's located
+in layer_1 and is hidden by volume of layer_2. So we can't access
+'real' folder.
+
+3.  
+
+Now the most important step. We want to change content of mount folder
+(volume). But this folder doesn't exist in image/container
+filesystem. So all our changes will be applied to host's folder.
+
+temp_container_3 = docker run $(layer_2) touch /test/file
+
+Let's find this file in host folder:
+folder = docker inspect -f '{{range .Mounts}}{{.Source}}{{end}}' $(temp_container_3)
+ls -lh $(folder)
+
+Our instruction in Dockerfile was successfully completed without
+errors or warnings.
+
+Now we have to commit changes to UFS. But wait. We didn't change this
+filesystem of image/container. There's really nothing to commit.
+
+layer_3 = docker commit $(temp_container_3)
+
+And now temporary container with changed volume must be
+deleted. Because it's ... temporary.
+
+docker rm -v $(temp_container_3)
+
+Let's check for existence of host folder with our recent changes:
+
+[ -d $(folder) ] || 'doesn't exist'
+or
+cd $(folder)
+
+Conclusion: all changes in intermediate container after VOLUME
+instruction were discarded because these changes were applied to host
+folder, which is deleted by docker engine after creation of each layer
+while building image.

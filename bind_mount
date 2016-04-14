@@ -1,0 +1,35 @@
+Bind mounting with data containers.
+
+Today I'd like to show one interesting behavior of docker engine, when
+we want to make some folders of container to be accessible from host
+computer. Suppose we would like to view /usr folder of container, built
+on debian image, from folder /test on our PC. There are two ways to do
+it: inconvenient/correct and convenient/incorrect.
+
+Let start with the first one.
+
+cid=$(docker run -v /usr debian)
+folder=$(docker inspect -f '{{range .Mounts}}{{.Source}}{{end}}' $(cid))
+ls $(folder)
+
+It takes some time to copy files from container's /usr to host machine.
+
+But what if we would like to inspect container's folder from specific
+host folder, which is easy to, for example, list or backup. First what
+comes to head is:
+
+mkdir /test
+cid=$(docker run -v /test:/usr debian)
+ls /test
+
+List of /test folder gives us nothing. Because when docker engine
+creates volume it copies container's files only in one case: when host
+folder is under this engine's control. That is located in
+/var/lib/docker/volumes/... But if host folder is located somewhere
+else, than there's risk such copying would erase user's content.
+
+Note, that all this is valid in case when we try to access image's
+folders from host specific folder in container's creation time (which
+is common when working with data containers). But of course after
+creation every container's changes to volume's content will be visible
+from host (and vice versa).

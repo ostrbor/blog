@@ -1,0 +1,30 @@
+Why to use sh -c in command when docker run?
+
+In CMD string docker takes first word and launch it as command but
+other words despite being called CMD are just arguments. So last
+string of docker run is not command but command and set of
+arguments. That's why you can't do 
+
+docker run --rm debian echo hi && echo bye
+
+Second problem is about evaluating of environment variables. What is
+the output of this command?
+
+docker run --rm debian echo $PATH
+
+It shows only path of host's machine, not of container. Because docker
+run is envoked in host's bash and this bash replaces variable with
+values from host's environment.
+
+So what if you want to pass two commands to docker-run?  Or what if
+you want to use container's env vars? To do it you must use single
+quotes. On docker hub you will see it often. Single quotes prevents
+bash from resolving. It gives us string. Now we use 'sh -c' command to
+run shell that interprets passed string as command to run. 
+
+docker run --rm debian sh -c 'echo hi && echo bye'
+
+But sh spawns another child process. We don't want sh process to
+consume memory, to replace it with echo process use 'exec'.
+
+docker run --rm debian sh -c 'exec echo $PATH'

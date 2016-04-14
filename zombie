@@ -1,0 +1,62 @@
+Docker, zombies and phusion/baseimage.
+
+Recently I talked to my brother and he gave me link to an article
+about risk of creating zombie processes while running applications in
+docker containers, rather than running without.
+
+Here I invite you to play with zombies and test them in different
+environments. In the end you'll be able to define zombie process on
+your own, based on what you see, not what is written in books.
+
+First we must learn how to create zombie. It's easy. According to Wiki
+zombie is exited process that exists until it's parent reads the
+zombie's record in process table. Such reading is done by invoking
+function 'wait' by parent. To put it simple we fork child, then child
+exits and becomes zombie and parent call 'wait' to reap zombie. This
+happens fast so to prolong life of zombie we make parent to sleep some
+time before 'wait'.
+
+Here is script.
+
+Let's run it in container:
+mkdir ~/zombie
+clone zombie.py into ~/zombie
+docker run --rm --name shaun -v ~/zombie:/zombie python python zombie.py
+
+In another terminal we get container id (cid):
+cid = $(docker inspect -f '{{.State.Pid}}' shaun)
+
+To fetch pts, allocated for container:
+ps aux|grep $cid
+
+To inspect all container's processes:
+ps aux|grep <pts>
+
+Running ps several times will show how child change it's status to
+Z. We know about 'sudo kill -9' command. It sends uncatchable signal
+to process and terminates it. Try kill zombie process. You'll see,
+it's impossible. Why? Because you can't kill twice.
+
+So we came to first conclusion: zombie is always exited/killed
+process. But because of that they are not harmless, as they can eat
+whole space of process table.
+
+Now let's find out whether Z has parent or not:
+ps -o ppid= <zombi-pid>
+
+Output leads us to second fact: Z always has parent. If you want to
+get rid of Z, find it's parent and kill it. The most annoying zombies
+are children of init, because only reboot helps. If you observe long
+living zombie, it's not because parent passed away, but because parent
+is too busy to call 'wait'. May be it's sleeping (as in our case) or
+just hangs. 
+
+At last we can print the whole branch of dependent processes:
+pstree -ps $cid
+
+It makes us come to conclusion that all container's processes are
+descendants from the first - init/systemd. It doesn't matter whether
+you run your Nginx server in container or not. It's always under
+control of kernel's init. That's why I find phusion/baseimage to be
+redundant, as it creates another init to be parent for all other
+container's services and applications. What for if we already have one?
