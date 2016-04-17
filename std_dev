@@ -1,0 +1,95 @@
+Sometimes I read books on math and here I want to share my
+observations on why we use such strange formula to calculate standard
+deviation. We will invent our own formulas, play with simple numbers
+and later will see why we have to square and why denominator is 'N-1'
+not 'N'.
+
+Standard deviation is basic measure in Statistics. I think it will be
+interesting to know why it has such formula, not another:
+sqrt(sum(sqr(X-x)))/N, where X is value in population, x is mean and N
+is number of values.
+
+Imagine somebody was diagnosed with lethal disease and he was
+suggested to take experimental drugs that prolong life for about 12
+months (on average). In this case population is all people who took
+part in medical experiment in past and mean is equal to 12 months. But
+really knowing about only average lifetime is not enough to evaluate
+the most likely range of months to live. Because mean is just middle
+value around which may be majority of scores, lying extremely far away
+from middle point or very close to it.
+
+Average deviation as average measure among all differences between
+each score of population and mean, helps us better understand
+distribution. If in our example deviation is equal to 10 months, then
+it means that half of all cases lies in range 2-22 months. If
+deviation is 1, than range is 11-13.
+
+Deviation helps us to understand how scores are distributed around
+mean. But how to calculate it? First thought:
+absolute deviation = sum(|X-x|)/N
+We must use modulus because subtraction might be negative, but we want
+to sum all differences.
+
+Now let's check our first formula on practice. Consider this two
+simple populations:
+a)0 0 0 2 4 4
+b)-1 0 1 2 3 4 5
+
+They have same mean, same absolute deviation. But wait. Is deviation
+really the same? Don't you think that second example is more deviated
+from mean? We have to change our formula to reflect this
+observation. Here is useful arithmetic trick: square.
+
+Consider two equations:
+a) 1 + 2 = 3
+b) sqr(1) + sqr(2) = 5
+
+Now answer how number '1' and squared '1' influences the sum in first
+and second case?  How '2' and squared '2' participate in result? What
+part do they take in result? In other words what is the weight of each
+summand before and after squaring.
+
+Weight of '1' and squared '1' is 33% (of '3') and 20% (of '5').
+Weight of '2' and squared '2' is 66% (of '3') and 80% (of '5').
+
+As you can see after squaring, big numbers have more weight than small
+numbers. The weight of small numbers is decreasing and of big numbers
+is increasing while power is getting bigger.
+
+If we want our deviation to depend on big differences stronger than we
+must increase their weight. That's why we square. It's really
+doesn't matter how sum becomes big (whether it's '3' or '5'). Because
+we need this sum to compare with another sum of another population.
+
+Now apply squares in our example: first value is 4 and second is
+4,7. According to these values we can see that two populations are not
+the same. Variance of second is bigger. And our new value is called
+variance in statistics. Arithmetically it's average squared
+deviation. How to get standard deviation? Just calculate square root.
+
+Why we use power of two? Why not others? Well, you can if you
+want. But first, if power is odd then don't forget modulus. Second,
+less power easier calculate. Third, name new formula and become
+famous -).
+
+In statistics it's usual to operate with sample, not with whole
+distribution. And if we calculate mean of sample and of population
+then they are rarely the same. What do you think, how any change to
+mean would influence result? Suppose in our example '0 0 0 2 4 4 4' we
+use by mistake as mean number '3' (or any other) not '2'. In this case
+variance will always be bigger than real variance. Because mean is
+middle point that is equally far from all other values. If you use as
+mean another value on position different from middle then this new
+false mean will be closer to one set of numbers and farther from
+others. As you remember bigger distances or bigger numbers influence
+variance stronger. So variance always be bigger. The lowest variance
+if the real, that is calculated on whole population.
+
+That's why when we have small sample we should correct variance. The
+lower sample the bigger correction. For this purpose we can use as
+denominator not just 'N' but 'N-1'. The lower 'N' the bigger weight of
+'1'. The bigger 'N' the lower weight of '1' in denominator. In other
+words does it really change the fraction if we subtract '1' from 'N'
+equal to billions?
+
+That's it. Hope you like it.
